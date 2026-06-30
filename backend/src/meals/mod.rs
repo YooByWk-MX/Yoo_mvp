@@ -22,12 +22,12 @@ async fn request_meal(
     Extension(user): Extension<Claims>,
     Json(payload): Json<MealReq>,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    let result = sqlx::query!(
+    let result = sqlx::query(
         "INSERT INTO meal_requests (empno, target_date, meal_type) VALUES ($1, $2, $3)",
-        user.empno,
-        payload.target_date,
-        payload.meal_type
     )
+    .bind(&user.empno)
+    .bind(&payload.target_date)
+    .bind(&payload.meal_type)
     .execute(&state.db_pool)
     .await;
 

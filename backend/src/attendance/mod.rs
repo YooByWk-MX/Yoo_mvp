@@ -58,13 +58,11 @@ async fn scan_qr(
     })?;
 
     // 2. DB 기록 (동일 QR 중복 방지는 UNIQUE 제약조건이 알아서 막아줌)
-    let result = sqlx::query!(
-        "INSERT INTO attendance_logs (empno, qr_jti) VALUES ($1, $2)",
-        user.empno,
-        qr_data.claims.jti
-    )
-    .execute(&state.db_pool)
-    .await;
+    let result = sqlx::query("INSERT INTO attendance_logs (empno, qr_jti) VALUES ($1, $2)")
+        .bind(&user.empno)
+        .bind(&qr_data.claims.jti)
+        .execute(&state.db_pool)
+        .await;
 
     match result {
         Ok(_) => Ok(Json(

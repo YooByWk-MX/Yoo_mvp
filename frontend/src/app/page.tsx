@@ -1,31 +1,57 @@
-'use client';
+// src/app/page.tsx
+"use client";
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { Lang } from '@/types/jig';
-import { getDictionary } from '@/i18n/dictionaries';
-import Navbar from '@/components/common/Navbar';
+import { useRouter } from 'next/navigation';
+import { useAppStore, dict } from '@/store/useAppStore';
+import { apiFetch } from '@/lib/api';
 
-export default function PortalPage() {
-  const [lang, setLang] = useState<Lang>('ko');
-  const dict = getDictionary(lang);
+export default function LoginPage() {
+  const router = useRouter();
+  const { lang, setLang, setAuth } = useAppStore();
+  const t = dict[lang];
+  
+  const [empno, setEmpno] = useState('');
+  
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await apiFetch('/users/login', {
+        method: 'POST',
+        body: JSON.stringify({ empno, password: empno }) // MVP: 비밀번호는 사번과 동일
+      });
+      setAuth(res.token, res.role, empno);
+      if (res.role === 'ADMIN') router.push('/admin');
+      else router.push('/worker');
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col font-mono">
-      <Navbar currentLang={lang} onLangChange={setLang} />
-      
-      <main className="flex-1 flex flex-col justify-center items-center p-4 text-center">
-        <div className="max-w-md w-full bg-gray-800 border border-gray-700 p-6 sm:p-8 rounded-2xl shadow-2xl">
-          <div className="w-16 h-16 bg-blue-600/10 border border-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 114 0v2m0 0h4m0 0V5a2 2 0 114 0v2" /></svg>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold mb-8 text-gray-100 tracking-tight">{dict.main.title}</h1>
-          
-          <Link href={`/jigs?lang=${lang}`} className="block w-full bg-blue-600 hover:bg-blue-500 text-white font-bold p-4 rounded-xl shadow-lg transition active:scale-[0.98] text-sm sm:text-base">
-            {dict.main.portalBtn}
-          </Link>
+    <div className="min-h-screen bg-[#e8eef7] flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-sm p-8 w-full max-w-md border border-slate-200">
+        <div className="flex justify-end mb-4 bg-slate-100 rounded-lg p-1 w-fit ml-auto">
+          <button onClick={() => setLang('ko')} className={`px-3 py-1 rounded-md text-sm font-bold ${lang === 'ko' ? 'bg-white shadow text-slate-800' : 'text-slate-500'}`}>KO</button>
+          <button onClick={() => setLang('es')} className={`px-3 py-1 rounded-md text-sm font-bold ${lang === 'es' ? 'bg-white shadow text-slate-800' : 'text-slate-500'}`}>ES</button>
         </div>
-      </main>
+        
+        <h1 className="text-3xl font-black text-slate-800 mb-8 tracking-tight">YURA SYSTEM</h1>
+        
+        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          <input 
+            type="text" 
+            placeholder={t.empno}
+            value={empno}
+            onChange={(e) => setEmpno(e.target.value)}
+            className="p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 font-bold"
+            required
+          />
+          <button type="submit" className="bg-slate-800 text-white p-4 rounded-xl font-bold text-lg hover:bg-slate-700 transition">
+            {t.login}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

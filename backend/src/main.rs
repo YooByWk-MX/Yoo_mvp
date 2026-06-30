@@ -27,12 +27,12 @@ async fn main() {
         .connect(&db_url)
         .await
         .expect("DB 연결 실패");
-
-    sqlx::migrate!("./migrations")
-        .run(&db_pool)
-        .await
-        .expect("DB 마이그레이션 실패");
-
+    /**
+       sqlx::migrate!("./migrations")
+           .run(&db_pool)
+           .await
+           .expect("DB 마이그레이션 실패");
+    */
     let state = AppState {
         db_pool,
         jwt_secret: env::var("JWT_SECRET").unwrap_or_else(|_| "secret".to_string()),
@@ -67,7 +67,7 @@ async fn main() {
         .nest("/api/attendance", attendance::router())
         .nest("/api/meals", meals::router())
         // .nest("/api/jigs", jig::router())
-        .layer(middleware::from_fn_with_state(
+        .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             middleware::auth::require_login,
         ))
