@@ -35,7 +35,7 @@ async fn main() {
     */
     let state = AppState {
         db_pool,
-        jwt_secret: env::var("JWT_SECRET").unwrap_or_else(|_| "secret".to_string()),
+        jwt_secret: env::var("JWT_SECRET").unwrap_or_else(|_| "secret".to_string()), // <- 개발 이후 수정
     };
 
     // sqlx::query(
@@ -53,25 +53,44 @@ async fn main() {
 
     // let jig_repo = jig::repository::JigRepository::new(pool);
     // let state = AppState { jig_repo };
-
-    // [수정됨] MVP 로컬 테스트를 위해 모든 CORS 제약을 무시하고 완벽 허용
     let cors = CorsLayer::permissive();
 
-    let app = Router::new()
-        // 헬스체크
-        .route("/health", get(|| async { "Server is healthy" }))
-        // 기타 라우팅 : 지그 외 (추가 예정)
-        // 유저 라우팅
-        .nest("/api/users", users::public_router())
-        // 인증 영역
+    /*
+
+        let app = Router::new()
+            // 헬스체크
+            .route("/health", get(|| async { "Server is healthy" }))
+            // 기타 라우팅 : 지그 외 (추가 예정)
+            // 유저 라우팅
+            .nest("/api/users", users::public_router())
+            // 인증 영역
+            .nest("/api/attendance", attendance::router())
+            .nest("/api/meals", meals::router())
+            // .nest("/api/jigs", jig::router())
+            .layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                middleware::auth::require_login,
+            ))
+            // 상태 설정
+            .with_state(state)
+            .layer(cors);
+    */
+
+    let public_routes = Router::new()
+        .route("/health", get(|| async { "ok" }))
+        .nest("/api/users", users::public_router());
+
+    let private_routes = Router::new()
         .nest("/api/attendance", attendance::router())
         .nest("/api/meals", meals::router())
-        // .nest("/api/jigs", jig::router())
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             middleware::auth::require_login,
-        ))
-        // 상태 설정
+        ));
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(private_routes)
         .with_state(state)
         .layer(cors);
 
