@@ -21,7 +21,7 @@ export default function LoginPage() {
         body: JSON.stringify({ empno, password: empno }) // MVP: 비밀번호는 사번과 동일
       });
       setAuth(res.token, res.role, empno);
-      if (res.role === 'ADMIN') router.push('/admin');
+      if (res.role === 'ADMIN' || res.role === "SUDO" ) router.push('/admin');
       else router.push('/worker');
     } catch (err: any) {
       alert(err.message);

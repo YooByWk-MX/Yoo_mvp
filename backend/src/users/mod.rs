@@ -1,4 +1,4 @@
-use crate::{AppState, error::AppError};
+use crate::{AppState, error::AppError, middleware::auth::Claims};
 use axum::{Json, Router, extract::State, routing::post};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{EncodingKey, Header, encode};
@@ -24,18 +24,33 @@ async fn login(
     State(state): State<AppState>,
     Json(payload): Json<LoginReq>,
 ) -> Result<Json<LoginRes>, AppError> {
-    // MVP 테스트를 위해 비밀번호가 사번과 동일하면 패스하도록 임시 하드코딩
+    // 1. DB에서 유저 조회
+    let user = sqlx::query!(
+        "SELECT password_hash, role FROM users WHERE empno = $1 AND deleted_at IS NULL",
+        payload.empno
+    )
+    .fetch_optional(&state.db_pool)
+    .await?
+    .ok_or_else(|| AppError::Unauthorized("유저를 찾을 수 없습니다.".into()))?;
 
-    let role = if payload.empno == "ADMIN" {
-        "ADMIN"
-    } else {
-        "WORKER"
-    };
+    // 2. 비밀번호 비교 (bcrypt)
+    let valid = bcrypt::verify(&payload.password, &user.password_hash)
+        .map_err(|_| AppError::InternalServerError("비밀번호 검증 실패".into()))?;
 
-    let claims = crate::middleware::auth::Claims {
+    if !valid {
+        return Err(AppError::Unauthorized("비밀번호가 다릅니다.".into()));
+    }
+
+    // 3. JWT 발급
+    let exp = Utc::now()
+        .checked_add_signed(chrono::Duration::hours(48))
+        .expect("valid timestamp")
+        .timestamp() as usize;
+
+    let claims = Claims {
         empno: payload.empno.clone(),
-        role: role.to_string(),
-        exp: (Utc::now() + Duration::hours(24)).timestamp() as usize,
+        role: user.role.clone(),
+        exp,
     };
 
     let token = encode(
@@ -43,10 +58,10 @@ async fn login(
         &claims,
         &EncodingKey::from_secret(state.jwt_secret.as_ref()),
     )
-    .map_err(|_| AppError::InternalServerError("토큰 생성 실패".into()))?;
+    .map_err(|_| AppError::InternalServerError("토큰 발급 실패".into()))?;
 
     Ok(Json(LoginRes {
         token,
-        role: role.to_string(),
+        role: user.role,
     }))
 }
