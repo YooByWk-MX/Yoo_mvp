@@ -76,10 +76,12 @@ async fn main() {
             .layer(cors);
     */
 
+    // 토큰 불필요
     let public_routes = Router::new()
         .route("/health", get(|| async { "ok" }))
         .nest("/api/users", users::public_router());
 
+    // 토큰 필요
     let private_routes = Router::new()
         .nest("/api/attendance", attendance::router())
         .nest("/api/meals", meals::router())

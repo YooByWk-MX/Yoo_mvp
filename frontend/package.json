@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "local": "env-cmd -f .env.local next dev"
   },
   "dependencies": {
     "@yudiel/react-qr-scanner": "^2.6.0",
@@ -21,6 +22,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "env-cmd": "^11.0.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "postcss": "^8",
