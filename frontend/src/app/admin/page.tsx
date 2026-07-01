@@ -17,6 +17,7 @@ export default function AdminPage() {
   const fetchQR = async () => {
     try {
       const res = await apiFetch("/attendance/qr-generate");
+      console.log(res.qr_data)
       setQrToken(res.qr_data);
     } catch (err) {
       console.error(err);
