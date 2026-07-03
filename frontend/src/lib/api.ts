@@ -1,7 +1,7 @@
 import { useAppStore } from "@/store/useAppStore";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE!;
-console.log(API_BASE);
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080/api";
+
 export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
   const token = useAppStore.getState().token;
 

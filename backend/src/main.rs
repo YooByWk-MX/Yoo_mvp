@@ -8,6 +8,7 @@ mod error;
 mod jig;
 mod meals;
 mod middleware;
+mod tecnicas;
 mod users;
 
 #[derive(Clone)]
@@ -85,6 +86,29 @@ async fn main() {
     let private_routes = Router::new()
         .nest("/api/attendance", attendance::router())
         .nest("/api/meals", meals::router())
+        .nest(
+            "/api/tecnicas",
+            tecnicas::router().layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                middleware::auth::require_admin,
+            )),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            middleware::auth::require_login,
+        ));
+
+    let private_routes = Router::new()
+        .nest("/api/attendance", attendance::router())
+        .nest("/api/meals", meals::router())
+        // 생기팀 전용 모듈 (미들웨어로 ADMIN 권한 강제)
+        .nest(
+            "/api/tecnicas",
+            tecnicas::router().layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                middleware::auth::require_admin,
+            )),
+        )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             middleware::auth::require_login,

@@ -10,7 +10,7 @@ tokio = { version = "1", features = ["full"] }
 tower-http = { version = "0.5", features = ["cors", "trace"] }
 
 # Database
-sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid"] }
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid", "bigdecimal"] }
 
 # Serialization & Utils
 serde = { version = "1.0", features = ["derive"] }
@@ -19,6 +19,12 @@ dotenvy = "0.15"
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.6", features = ["v4", "serde"] }
 
-# Auth & Crypto (Phase 2를 위한 준비)
+# Auth & Crypto
 jsonwebtoken = "9.2"
 bcrypt = "0.15"
+
+# bigdecimal : postgres Numeric
+bigdecimal = { version = "0.3", features = ["serde"] }
+
+reqwest = { version = "0.12", features = ["json"] } # 웹훅
+scraper = "0.20" # HTML 파싱

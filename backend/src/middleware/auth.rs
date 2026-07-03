@@ -40,6 +40,18 @@ pub async fn require_login(
     Ok(next.run(req).await)
 }
 
+pub async fn require_more_than_admin(req: Request, next: Next) -> Result<Response, AppError> {
+    let claims = req
+        .extensions()
+        .get::<Claims>()
+        .ok_or_else(|| AppError::Unauthorized(("권한이 없습니다.").into()))?;
+
+    if claims.role != "ADMIN" || claims.role != "SUP" {
+        return Err(AppError::Forbidden);
+    }
+    Ok(next.run(req).await)
+}
+
 pub async fn require_admin(
     State(state): State<AppState>,
     req: Request,
@@ -48,7 +60,7 @@ pub async fn require_admin(
     let claims = req
         .extensions()
         .get::<Claims>()
-        .ok_or_else(|| AppError::Unauthorized(("로그인이 필요합니다.".into())))?;
+        .ok_or_else(|| AppError::Unauthorized("로그인이 필요합니다.".into()))?;
 
     if claims.role != "ADMIN" {
         return Err(AppError::Forbidden);
